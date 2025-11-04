@@ -1,77 +1,102 @@
-# Real-Time Chat Application with Socket.io
+ # Week 5: Real-Time Chat Application with Socket.io  
 
-This assignment focuses on building a real-time chat application using Socket.io, implementing bidirectional communication between clients and server.
+## Project Overview  
 
-## Assignment Overview
+This is a full-stack, real-time chat application built using React (Client) and Node.js/Express (Server), leveraging Socket.io for fast, bidirectional communication.  
+ The application fully implements all features across the five tasks, focusing on modern UX, performance optimization (Task 5), and advanced real-time functionality (Task 3).  
 
-You will build a chat application with the following features:
-1. Real-time messaging using Socket.io
-2. User authentication and presence
-3. Multiple chat rooms or private messaging
-4. Real-time notifications
-5. Advanced features like typing indicators and read receipts
+### Key Technologies  
 
-## Project Structure
+Frontend: React (Vite)  
 
-```
-socketio-chat/
-├── client/                 # React front-end
-│   ├── public/             # Static files
-│   ├── src/                # React source code
-│   │   ├── components/     # UI components
-│   │   ├── context/        # React context providers
-│   │   ├── hooks/          # Custom React hooks
-│   │   ├── pages/          # Page components
-│   │   ├── socket/         # Socket.io client setup
-│   │   └── App.jsx         # Main application component
-│   └── package.json        # Client dependencies
-├── server/                 # Node.js back-end
-│   ├── config/             # Configuration files
-│   ├── controllers/        # Socket event handlers
-│   ├── models/             # Data models
-│   ├── socket/             # Socket.io server setup
-│   ├── utils/              # Utility functions
-│   ├── server.js           # Main server file
-│   └── package.json        # Server dependencies
-└── README.md               # Project documentation
-```
+Styling: Tailwind CSS (Assumed via environment)  
 
-## Getting Started
+Real-Time: Socket.io Client  
 
-1. Accept the GitHub Classroom assignment invitation
-2. Clone your personal repository that was created by GitHub Classroom
-3. Follow the setup instructions in the `Week5-Assignment.md` file
-4. Complete the tasks outlined in the assignment
+Backend: Node.js, Express, Socket.io Server  
 
-## Files Included
+Sound: Tone.js (for custom sound notifications)  
 
-- `Week5-Assignment.md`: Detailed assignment instructions
-- Starter code for both client and server:
-  - Basic project structure
-  - Socket.io configuration templates
-  - Sample components for the chat interface
+### Setup and Installation  
 
-## Requirements
+Follow these steps to run the application locally:  
 
-- Node.js (v18 or higher)
-- npm or yarn
-- Modern web browser
-- Basic understanding of React and Express
+Prerequisites  
 
-## Submission
+Node.js (v18+) and npm installed.  
 
-Your work will be automatically submitted when you push to your GitHub Classroom repository. Make sure to:
+The project assumes two separate directories: server and client.  
 
-1. Complete both the client and server portions of the application
-2. Implement the core chat functionality
-3. Add at least 3 advanced features
-4. Document your setup process and features in the README.md
-5. Include screenshots or GIFs of your working application
-6. Optional: Deploy your application and add the URLs to your README.md
+1. Backend Setup (server directory)  
 
-## Resources
+Navigate to the server directory.  
 
-- [Socket.io Documentation](https://socket.io/docs/v4/)
-- [React Documentation](https://react.dev/)
-- [Express.js Documentation](https://expressjs.com/)
-- [Building a Chat Application with Socket.io](https://socket.io/get-started/chat) 
+Install dependencies:  
+
+`npm install`
+ 
+
+
+Create a .env file for configuration:  
+
+
+`CLIENT_URL=http://localhost:5173`  
+`PORT=5000`
+  
+
+
+Start the server using Nodemon (for development):  
+
+`npm run dev`
+
+
+2. Frontend Setup (client directory)  
+
+Navigate to the client directory.  
+
+Install dependencies:  
+
+`npm install`  
+
+
+Start the React application:  
+
+`npm run dev`  
+
+
+### ✅ Features Implemented    
+
+This application successfully implements all features across the five tasks, demonstrating a mastery of real-time communication patterns.  
+
+| Feature            | Implementation Detail                                                                                                                                    |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Authentication     | Simple username-based authentication on join.                                                                                                            |
+| Multiple Channels  | Users can select and join specific rooms (`General`, `Tech Talk`, `Random`) using `socket.join(room)`.                                                   |
+| Typing Indicator   | Implemented on a per-room basis using `socket.emit('typing', ...)`.                                                                                      |
+| Private Messaging  | Uses `socket.to(recipientId).emit('private_message', ...)` for targeted delivery.                                                                        |
+| Message Reactions  | Users can react (👍, ❤️, 😂). State is managed on the server and broadcasted via `message_reacted`.                                                      |
+| File/Image Sharing | Implemented using a secure URL placeholder pattern (`socket.emit('file_share', fileURL)`) to handle file transfer signaling without actual file uploads. |
+| Read Receipts      | Uses the Intersection Observer on the client to detect when a message is scrolled into view, sending a `read_receipt` event to the server.               |
+
+
+| Feature                   | Implementation Detail                                                                                                                                                                      |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Delivery Acknowledgment   | Uses Socket.io callbacks (`(response) => { ... }`) on `send_message` to confirm server processing and display `[✓]` status on the client.                                                  |
+| Message Pagination        | Implements a dedicated API route (`GET /api/messages?room=...`) on the server. The client uses an Intersection Observer to trigger `loadOlderMessages()` when the user scrolls to the top. |
+| Custom Sound Notification | Replaced the default sound with a pleasant electronic "blip" generated using Tone.js.                                                                                                      |
+| Browser Notifications     | Uses the Web Notifications API and updates the tab title with unread message count when the window is blurred.                                                                             |
+| Reconnection Logic        | Socket configuration is set for automatic reconnection attempts.                                                                                                                           |
+
+ ### Screenshots and Demonstration  
+
+Below are screenshots demonstrating key functionality, including multi-user chat, private messaging, and file sharing.  
+
+
+
+### Deployment Information  
+  
+
+Chat Server (Backend)  
+
+
+Chat Client (Frontend)  
