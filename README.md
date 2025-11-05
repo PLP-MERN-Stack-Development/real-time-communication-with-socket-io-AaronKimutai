@@ -91,11 +91,11 @@ This application successfully implements all features across the five tasks, dem
 
 Below are screenshots demonstrating key functionality, including multi-user chat, private messaging, and file sharing.  
 
-![Screenshot 1](client/src/assets/screenshot2.png)    
+![Screenshot 1](client/src/assets/Screenshot2.png)    
 
-![Screenshot 2](client/src/assets/screenshot3.png)    
+![Screenshot 2](client/src/assets/Screenshot3.png)    
 
-![Screenshot 3](client/src/assets/screenshot1.png)    
+![Screenshot 3](client/src/assets/Screenshot1.png)    
 
 
 ### Deployment Information  
