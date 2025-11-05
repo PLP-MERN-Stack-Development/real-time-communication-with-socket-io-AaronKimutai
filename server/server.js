@@ -8,12 +8,26 @@ const path = require('path');
 // Load environment variables
 dotenv.config();
 
+
+const allowedOrigins = [
+    'http://localhost:5173',
+    'https://voluble-beijinho-f88185.netlify.app'
+];
+
+
+const expressOrigin = process.env.CLIENT_URL || allowedOrigins;
+
+
+
 // Initialize Express app
 const app = express();
 const server = http.createServer(app);
+
+
 const io = new Server(server, {
     cors: {
-        origin: process.env.CLIENT_URL || 'http://localhost:5173',
+        // Use the array of allowedOrigins for Socket.IO
+        origin: allowedOrigins, 
         methods: ['GET', 'POST'],
         credentials: true,
     },
@@ -21,9 +35,9 @@ const io = new Server(server, {
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL,
-  methods: ["GET", "POST"],
-  credentials: true
+    origin: expressOrigin, 
+    methods: ["GET", "POST"],
+    credentials: true
 }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -43,6 +57,7 @@ const findMessageById = (id) => messages.find(msg => msg.id === id);
 io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id}`);
 
+   
 
     socket.on('user_join_room', ({ username, room }) => {
         const oldRoom = users[socket.id]?.room;
@@ -61,7 +76,6 @@ io.on('connection', (socket) => {
         console.log(`${username} joined room: ${room}`);
     });
 
- 
     socket.on('file_share', (fileMessageData, callback) => {
         const user = users[socket.id];
         if (!user || !user.room) {
@@ -200,7 +214,7 @@ io.on('connection', (socket) => {
     });
 
 
-  
+    
     socket.on('typing', (isTyping) => {
         const user = users[socket.id];
         if (!user || !user.room) return;
@@ -212,13 +226,13 @@ io.on('connection', (socket) => {
         }
 
         const roomTypingUsers = Object.values(typingUsers)
-                                     .filter(u => u.room === user.room)
-                                     .map(u => u.username);
+                                       .filter(u => u.room === user.room)
+                                       .map(u => u.username);
         
         socket.to(user.room).emit('typing_users', roomTypingUsers);
     });
 
- 
+    
     socket.on('disconnect', () => {
         const user = users[socket.id];
         if (user) {
