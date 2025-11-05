@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
+import * as Tone from "tone";
 
-
-//  Configuration 
+// configuration 
 const SOCKET_URL = "http://localhost:5000";
 const CHANNELS = ["General", "Tech Talk", "Random"]; 
 
-// Initialize the socket connection outside the component 
+// initialize the socket connection outside the component 
 const socket = io(SOCKET_URL, {
     autoConnect: false,
     reconnection: true,
@@ -15,48 +15,50 @@ const socket = io(SOCKET_URL, {
 });
 
 export default function App() {
-    //  State Management 
+    // State Management 
     const [username, setUsername] = useState("");
     const [message, setMessage] = useState("");
     const [room, setRoom] = useState(CHANNELS[0]);
     const [privateRecipientId, setPrivateRecipientId] = useState(null);
     const [chatStarted, setChatStarted] = useState(false);
     
-    // Core Data States
+  
     const [messages, setMessages] = useState([]);
     const [users, setUsers] = useState([]);
     const [typingUsers, setTypingUsers] = useState([]);
     const [sentMessages, setSentMessages] = useState({});
     
-    
+
     const [hasMoreMessages, setHasMoreMessages] = useState(true);
     const [loadingHistory, setLoadingHistory] = useState(false);
     
-  
+ 
     const [selectedFile, setSelectedFile] = useState(null);
     
-  
+ 
     const messageWindowRef = useRef(null);
     const observer = useRef(null);
     const synthRef = useRef(null); 
+    
+ 
+    const typingTimeoutRef = useRef(null);
+    const isTypingRef = useRef(false);
+
+
     useEffect(() => {
-        
-        if (typeof window.Tone !== 'undefined') {
-            try {
-                
-                const synth = new window.Tone.PolySynth(window.Tone.Synth, {
-                    oscillator: { type: "sine" },
-                    envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.5 }
-                }).toDestination();
-                synthRef.current = synth;
-                console.log("Tone.js Synth Initialized.");
-            } catch (e) {
-                console.error("Failed to initialize Tone.js:", e);
-            }
+        try {
+            const synth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.5 }
+            }).toDestination();
+            synthRef.current = synth;
+            console.log("Tone.js Synth Initialized.");
+        } catch (e) {
+            console.error("Failed to initialize Tone.js:", e);
         }
     }, []);
 
-  
+   // message pagination
     const loadOlderMessages = async () => {
         if (loadingHistory || !hasMoreMessages || !socket.connected) return;
 
@@ -69,6 +71,7 @@ export default function App() {
             const olderMessages = await response.json();
 
             if (olderMessages.length > 0) {
+                
                 setMessages(prev => {
                     const systemMessages = prev.filter(m => m.system);
                     const currentActualMessages = prev.filter(m => !m.system);
@@ -125,26 +128,28 @@ export default function App() {
     }, [room, messages.length]);
 
 
-    // Socket Event Handlers ---
+    //  Socket Event Handlers 
     useEffect(() => {
-  
+
         socket.on("connect", () => console.log("Connected:", socket.id));
         socket.on("disconnect", () => console.log("Disconnected"));
 
-
+      
         socket.on("receive_message", (msg) => {
             setMessages(prev => {
                 const newMessages = [...prev, msg];
                 
                 if (document.hidden) {
+                    // Custom Tone.js Sound notification
                     if (synthRef.current) {
                         try {
+                            Tone.start();
                             synthRef.current.triggerAttackRelease(["C5"], 0.1);
                         } catch (e) {
                             console.error("Tone.js playback error:", e);
                         }
                     }
-  
+
                     if (Notification.permission === "granted") {
                         new Notification(`${msg.sender} in #${msg.room}`, {
                             body: msg.message,
@@ -157,10 +162,10 @@ export default function App() {
             });
         });
 
-  
+
         socket.on("private_message", (msg) => setMessages(prev => [...prev, { ...msg, isPrivate: true }]));
 
-
+ 
         socket.on('message_reacted', ({ messageId, newReactions }) => {
             setMessages(prev => prev.map(msg => msg.id === messageId ? { ...msg, reactions: newReactions } : msg));
         });
@@ -172,7 +177,7 @@ export default function App() {
             ));
         });
 
-
+   
         socket.on("user_list", (userList) => setUsers(userList));
         socket.on("typing_users", (users) => setTypingUsers(users));
         
@@ -188,21 +193,21 @@ export default function App() {
         };
     }, []);
 
-
+  
     useEffect(() => {
         if (messageWindowRef.current) messageWindowRef.current.scrollTop = messageWindowRef.current.scrollHeight;
     }, [messages.length]);
 
-
+    
     useEffect(() => {
         const messageWindow = messageWindowRef.current;
         if (!messageWindow) return;
 
         const handleScroll = () => {
-            const messagesArray = Array.from(messageWindow.children).filter(el => el.dataset.id);
+            const messagesArray = Array.from(messageWindow.children).filter(el => el.dataset.id); 
             if (!messagesArray.length) return;
 
-           
+            
             const lastMessageElement = messagesArray[messagesArray.length - 1];
             const lastMsgId = lastMessageElement?.dataset?.id; 
 
@@ -219,7 +224,9 @@ export default function App() {
     }, [messages.length, room]);
 
 
-    
+    // client Handlers 
+
+ 
     const handleConnect = () => {
         if (!username.trim()) return;
         socket.connect();
@@ -230,7 +237,7 @@ export default function App() {
         loadOlderMessages();
     };
 
-
+   
     const handleLeave = () => {
         socket.disconnect();
         setChatStarted(false);
@@ -239,6 +246,7 @@ export default function App() {
         setPrivateRecipientId(null);
     };
 
+   
     const handleSendMessage = (e) => {
         e.preventDefault();
         
@@ -256,6 +264,7 @@ export default function App() {
         };
 
         if (selectedFile) {
+
             const fileURL = `https://placehold.co/200x150/1e40af/ffffff/png?text=${selectedFile.name.substring(0, 10)}`;
             msgData = { 
                 ...msgData, 
@@ -266,7 +275,7 @@ export default function App() {
             };
         }
 
-
+  
         setMessages(prev => [...prev, msgData]);
         setSentMessages(prev => ({ ...prev, [tempId]: 'pending' }));
 
@@ -288,29 +297,59 @@ export default function App() {
             }
         });
 
-  
+        // Cleanup
         setMessage("");
         setSelectedFile(null);
-        socket.emit("typing", false);
+        
+
+        if (isTypingRef.current) {
+            socket.emit("typing", false);
+            isTypingRef.current = false;
+            clearTimeout(typingTimeoutRef.current);
+        }
     };
     
-    // typing Indicator
+ 
     const handleInput = (e) => {
-        setMessage(e.target.value);
-        socket.emit("typing", e.target.value.length > 0);
-    };
+        const value = e.target.value;
+        setMessage(value);
 
-   
-    const handleReaction = (messageId, reactionType) => socket.emit("react_message", { messageId, reactionType });
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+        }
 
   
+        if (value.length > 0 && !isTypingRef.current) {
+            socket.emit("typing", true);
+            isTypingRef.current = true;
+        }
+
+        
+        typingTimeoutRef.current = setTimeout(() => {
+            if (isTypingRef.current) {
+                socket.emit("typing", false);
+                isTypingRef.current = false;
+            }
+        }, 1000); 
+
+        if (value.length === 0 && isTypingRef.current) {
+            socket.emit("typing", false);
+            isTypingRef.current = false;
+            clearTimeout(typingTimeoutRef.current);
+        }
+    };
+
+ 
+    const handleReaction = (messageId, reactionType) => socket.emit("react_message", { messageId, reactionType });
+
+
     const togglePrivateRecipient = (recipientId) => { 
         setPrivateRecipientId(prevId => (prevId === recipientId ? null : recipientId)); 
         setMessage(""); 
         setSelectedFile(null); 
     };
 
- 
+
     const userId = socket.id;
     const usersInCurrentRoom = users.filter(user => user.room === room);
     
@@ -325,7 +364,7 @@ export default function App() {
     const currentRoomTypingUsers = typingUsers.filter(u => users.find(user => user.username === u)?.room === room);
     const pmRecipientUser = users.find(u => u.id === privateRecipientId);
 
-    // --- JSX Render ---
+  
     if (!chatStarted) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
@@ -360,8 +399,6 @@ export default function App() {
     return (
         <div className="flex min-h-screen bg-gray-50 p-6 font-sans">
             <div className="grow flex flex-col max-w-4xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden">
-                
-
                 <header className="p-4 bg-indigo-600 text-white flex justify-between items-center shadow-lg">
                     <h2 className="text-xl font-semibold">#{room} Chat Room</h2>
                     <button 
@@ -373,8 +410,6 @@ export default function App() {
                 </header>
 
                 <div className="flex grow overflow-hidden">
-                    
-  
                     <div className="grow flex flex-col p-4 overflow-y-auto" style={{ flexBasis: '75%' }}>
                         
 
@@ -401,7 +436,7 @@ export default function App() {
                                         <span className="text-xs text-gray-500 ml-4">{msg.timestamp.substring(11, 16)}</span>
                                     </div>
                                     
-  
+
                                     {msg.fileURL && (
                                         <div className="my-2 border border-gray-300 rounded-lg overflow-hidden">
                                             {msg.fileType?.startsWith('image/') ? (
@@ -416,7 +451,7 @@ export default function App() {
 
                                     <p className="text-gray-800">{msg.message}</p>
 
-  
+   
                                     <div className="flex items-center mt-2 space-x-2">
                                         {["👍", "❤️", "😂"].map(emoji => {
                                             const count = msg.reactions?.[emoji]?.length || 0;
@@ -430,9 +465,10 @@ export default function App() {
                                                 </button>
                                             );
                                         })}
+                                     
                                         {msg.senderId === userId && sentMessages[msg.id] && (
-                                            <span className={`text-xs ml-2 ${sentMessages[msg.id]==='acknowledged'?'text-green-600':sentMessages[msg.id]==='pending'?'text-orange-500':'text-red-500'}`}>
-                                                [{sentMessages[msg.id]==='acknowledged'?'✓':sentMessages[msg.id]==='pending'?'...':'❌'}]
+                                            <span className={`text-xs ml-2 ${sentMessages[msg.id]==='acknowledged'?'text-green-600':'text-red-500'}`}>
+                                                [{sentMessages[msg.id]==='acknowledged'?'✓':(sentMessages[msg.id]==='pending'?'...':'❌')}]
                                             </span>
                                         )}
                                         
@@ -452,8 +488,6 @@ export default function App() {
                             )}
                         </div>
                     </div>
-
-  
                     <div className="p-4 bg-gray-100 border-l border-gray-200 overflow-y-auto" style={{ flexBasis: '25%' }}>
                         <h3 className="text-lg font-semibold mb-3">Users in #{room}</h3>
                         <ul className="space-y-2">
@@ -473,11 +507,8 @@ export default function App() {
                         </ul>
                     </div>
                 </div>
-
-
                 <div className="p-4 border-t border-gray-200 bg-white">
                     {selectedFile && <div className="flex items-center justify-between p-2 mb-2 bg-indigo-50 rounded-lg border border-indigo-200"><span className="text-sm font-medium truncate text-indigo-700">{selectedFile.name} ready.</span><button type="button" onClick={()=>setSelectedFile(null)} className="text-red-500 hover:text-red-700 text-sm font-bold">Remove</button></div>}
-
 
                     {privateRecipientId && <div className="p-2 mb-2 bg-yellow-100 rounded-lg text-sm text-yellow-800">Sending private message to: {pmRecipientUser?.username||'Unknown User'}</div>}
 
@@ -489,9 +520,6 @@ export default function App() {
                             onChange={handleInput}
                             className="grow p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition"
                         />
-                        
-  
-  
                         <input
                             type="file"
                             id="file-upload"
@@ -499,6 +527,7 @@ export default function App() {
                             onChange={e=>setSelectedFile(e.target.files[0])} 
                             accept="image/*, application/pdf" 
                         />
+                        
                         <label htmlFor="file-upload" 
                             className={`px-4 py-3 rounded-lg font-bold transition shadow-md text-white flex items-center justify-center ${selectedFile?'bg-orange-500 hover:bg-orange-600':'bg-gray-500 hover:bg-gray-600'}`}
                             title="Attach File/Image"
