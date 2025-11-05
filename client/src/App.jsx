@@ -3,7 +3,8 @@ import io from "socket.io-client";
 import * as Tone from "tone";
 
 // configuration 
-const SOCKET_URL = "http://localhost:5000";
+const SOCKET_URL = "https://real-time-communication-with-socket-io-6qa6.onrender.com";
+
 const CHANNELS = ["General", "Tech Talk", "Random"]; 
 
 // initialize the socket connection outside the component 
