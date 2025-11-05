@@ -101,7 +101,8 @@ Below are screenshots demonstrating key functionality, including multi-user chat
 ### Deployment Information  
   
 
-Chat Server (Backend)  
+Chat Server (Backend)   
+[Server API](https://real-time-communication-with-socket-io-6qa6.onrender.com/)  
 
-
-Chat Client (Frontend)  
+Chat Client (Frontend)    
+[Real-Time Communication App](https://voluble-beijinho-f88185.netlify.app/)
