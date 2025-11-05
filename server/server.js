@@ -14,8 +14,13 @@ const allowedOrigins = [
     'https://voluble-beijinho-f88185.netlify.app'
 ];
 
-
-const expressOrigin = process.env.CLIENT_URL || allowedOrigins;
+const io = new Server(server, {
+    cors: {
+        origin: allowedOrigins, // <--- ALWAYS use the array here
+        methods: ['GET', 'POST'],
+        credentials: true,
+    },
+});
 
 
 
@@ -24,14 +29,6 @@ const app = express();
 const server = http.createServer(app);
 
 
-const io = new Server(server, {
-    cors: {
-        // Use the array of allowedOrigins for Socket.IO
-        origin: allowedOrigins, 
-        methods: ['GET', 'POST'],
-        credentials: true,
-    },
-});
 
 // Middleware
 app.use(cors({
