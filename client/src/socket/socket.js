@@ -1,7 +1,9 @@
 import { io } from 'socket.io-client';
 import { useEffect, useState } from 'react';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL 
+const SOCKET_URL = 'https://real-time-communication-with-socket-io-6qa6.onrender.com';
+
+
 
 export const socket = io(SOCKET_URL, {
     autoConnect: false,
